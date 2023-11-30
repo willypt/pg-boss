@@ -430,7 +430,6 @@ class Manager extends EventEmitter {
         : typeof startAfter === 'number'
           ? new Date(Date.now() + startAfter * 1000)
           : startAfter
-
     const values = [
       id, // 1
       name, // 2
@@ -451,9 +450,6 @@ class Manager extends EventEmitter {
     const result = await db.executeSql(this.insertJobCommand, values)
 
     if (result && result.rowCount === 1) {
-      if (name === 'respects-startafter-for-sendqueued') {
-        console.log({ id, name, data, startAfter: options.startAfter, singletonOffset })
-      }
       return result.rows[0].id
     }
 
@@ -461,7 +457,7 @@ class Manager extends EventEmitter {
       return null
     }
 
-    const nextOffset = (singletonOffset || 0) + singletonSeconds
+    const nextOffset = singletonSeconds || 0
 
     options.singletonNextSlot = options.shouldQueueAll || false
 
@@ -478,17 +474,14 @@ class Manager extends EventEmitter {
     return await db.executeSql(this.insertJobsCommand, [data])
   }
 
-  getDebounceStartAfter (startAfter, offset, singletonSeconds) {
-    const now = startAfter.getTime()
+  getDebounceStartAfter (startAfter, offset) {
+    let newDate = new Date(startAfter.getTime() + offset * 1000)
 
-    const slot = Math.ceil(now / (singletonSeconds * 1000)) * (singletonSeconds * 1000)
-    let nextStart = ((offset - singletonSeconds) + singletonSeconds - Math.ceil((now - slot) / 1000)) || 1
-
-    if (singletonSeconds > 1) {
-      nextStart++
+    if (newDate.getTime() === startAfter.getTime()) {
+      newDate = newDate.setMilliseconds(newDate.getTime() + 1)
     }
 
-    return nextStart
+    return newDate
   }
 
   async fetch (name, batchSize, options = {}) {

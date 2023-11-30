@@ -7,11 +7,15 @@ const Timekeeper = require('./timekeeper')
 const Boss = require('./boss')
 const Db = require('./db')
 const delay = require('delay')
+const packageJson = require('../package.json')
 
 const events = {
   error: 'error',
   stopped: 'stopped'
 }
+
+const VERSION = packageJson.version
+
 class PgBoss extends EventEmitter {
   static getConstructionPlans (schema) {
     return Contractor.constructionPlans(schema)
@@ -23,6 +27,10 @@ class PgBoss extends EventEmitter {
 
   static getRollbackPlans (schema, version) {
     return Contractor.rollbackPlans(schema, version)
+  }
+
+  static getVersion () {
+    return VERSION
   }
 
   constructor (value) {

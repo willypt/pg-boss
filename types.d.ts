@@ -275,6 +275,8 @@ declare class PgBoss extends EventEmitter {
   static getRollbackPlans(schema: string): string;
   static getRollbackPlans(): string;
 
+  static getVersion(): string;
+
   on(event: "error", handler: (error: Error) => void): this;
   off(event: "error", handler: (error: Error) => void): this;
 
