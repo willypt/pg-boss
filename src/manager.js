@@ -423,12 +423,20 @@ class Manager extends EventEmitter {
 
     const id = uuid[this.config.uuid]()
 
+    const usedStartAfter = !startAfter
+      ? new Date()
+      : typeof startAfter === 'string'
+        ? new Date(startAfter)
+        : typeof startAfter === 'number'
+          ? new Date(Date.now() + startAfter * 1000)
+          : startAfter
+
     const values = [
       id, // 1
       name, // 2
       priority, // 3
       retryLimit, // 4
-      startAfter, // 5
+      usedStartAfter.toISOString(), // 5
       expireIn, // 6
       data, // 7
       singletonKey, // 8
@@ -443,6 +451,9 @@ class Manager extends EventEmitter {
     const result = await db.executeSql(this.insertJobCommand, values)
 
     if (result && result.rowCount === 1) {
+      if (name === 'respects-startafter-for-sendqueued') {
+        console.log({ id, name, data, startAfter: options.startAfter, singletonOffset })
+      }
       return result.rows[0].id
     }
 
@@ -454,7 +465,7 @@ class Manager extends EventEmitter {
 
     options.singletonNextSlot = options.shouldQueueAll || false
 
-    options.startAfter = this.getDebounceStartAfter(nextOffset, singletonSeconds)
+    options.startAfter = this.getDebounceStartAfter(usedStartAfter, nextOffset, singletonSeconds)
 
     return await this.createJob(name, data, options, nextOffset)
   }
@@ -467,16 +478,17 @@ class Manager extends EventEmitter {
     return await db.executeSql(this.insertJobsCommand, [data])
   }
 
-  getDebounceStartAfter (offset, singletonSeconds) {
-    const now = Date.now()
+  getDebounceStartAfter (startAfter, offset, singletonSeconds) {
+    const now = startAfter.getTime()
+
     const slot = Math.ceil(now / (singletonSeconds * 1000)) * (singletonSeconds * 1000)
-    let startAfter = ((offset - singletonSeconds) + singletonSeconds - Math.ceil((now - slot) / 1000)) || 1
+    let nextStart = ((offset - singletonSeconds) + singletonSeconds - Math.ceil((now - slot) / 1000)) || 1
 
     if (singletonSeconds > 1) {
-      startAfter++
+      nextStart++
     }
 
-    return startAfter
+    return nextStart
   }
 
   async fetch (name, batchSize, options = {}) {

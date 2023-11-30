@@ -588,7 +588,7 @@ function insertJob (schema) {
             $7::jsonb as data,
             $8::text as singletonKey,
             CASE
-              WHEN $9::integer IS NOT NULL THEN 'epoch'::timestamp + '1 second'::interval * ($9 * floor((date_part('epoch', now()) + $10) / $9))
+              WHEN $9::integer IS NOT NULL THEN 'epoch'::timestamp + '1 second'::interval * ($9 * floor((date_part('epoch', CAST($5::text as timestamp with time zone)) + $10) / $9))
               ELSE NULL
               END as singletonOn,
             $11::int as retryDelay,

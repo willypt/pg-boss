@@ -134,4 +134,35 @@ describe('throttle', function () {
 
     assert.notEqual(jobId4, null)
   })
+
+  it('should respects startAfter for sendQueued()', async function () {
+    const boss = this.test.boss = await helper.start(this.test.bossConfig)
+
+    const queue = 'respects-startafter-for-sendqueued'
+    const seconds = 60
+
+    const jobId1 = await boss.sendQueued(queue, { job: 1 }, { startAfter: new Date(Date.now() + 0 * 60000) }, seconds, 'x')
+
+    assert(jobId1)
+
+    const jobId2 = await boss.sendQueued(queue, { job: 2 }, { startAfter: new Date(Date.now() + 2 * 60000) }, seconds, 'x')
+
+    assert.notEqual(jobId2, null)
+
+    const jobId3 = await boss.sendQueued(queue, { job: 3 }, { startAfter: new Date(Date.now() + 5 * 60000) }, seconds, 'x')
+
+    assert.notEqual(jobId3, null)
+
+    const jobId4 = await boss.sendQueued(queue, { job: 4 }, { startAfter: new Date(Date.now() + 10 * 60000) }, seconds, 'x')
+
+    assert.notEqual(jobId4, null)
+
+    const jobId5 = await boss.sendQueued(queue, { job: 5 }, { startAfter: new Date(Date.now() + 0 * 60000) }, seconds, 'x')
+
+    assert.notEqual(jobId5, null)
+
+    const jobId6 = await boss.sendQueued(queue, { job: 6 }, { startAfter: new Date(Date.now() + 0 * 60000) }, seconds, 'x')
+
+    assert.notEqual(jobId6, null)
+  })
 })
